@@ -43,7 +43,7 @@ nc <ps5-ip> 9021 < payload.elf
 ```
 
 The jailbreak takes about three seconds. Progress is printed to the sender and
-mirrored to UDP port 5050 on your machine.
+mirrored to UDP port 5050 on your machine. Use `python tools/analyze_udp_log.py capture.log` to summarize a saved capture; add `--json` for machine-readable output.
 
 ## Closing the app
 
