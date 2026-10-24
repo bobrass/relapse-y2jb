@@ -41,14 +41,14 @@ def analyze(stream: TextIO) -> dict[str, object]:
             handoff_total = int(step.group(2))
     counts = Counter(seqs)
     unique = sorted(counts)
-    present = set(unique)
-    gaps = [n for n in range(unique[0], unique[-1] + 1) if n not in present] if unique else []
+
+    gaps = [[left + 1, right - 1] for left, right in zip(unique, unique[1:]) if right > left + 1]
     return {
         "numbered_lines": len(seqs),
         "unique_sequences": len(unique),
         "duplicate_sequences": sorted(n for n, count in counts.items() if count > 1),
         "out_of_order_transitions": sum(a > b for a, b in zip(seqs, seqs[1:])),
-        "missing_sequences_between_observed": gaps,
+        "missing_sequence_ranges_between_observed": gaps,
         "first_sequence": unique[0] if unique else None,
         "highest_sequence_observed": unique[-1] if unique else None,
         # Highest-sequence raw text is intentionally omitted.
@@ -62,7 +62,7 @@ def analyze(stream: TextIO) -> dict[str, object]:
 
 
 def render_text(r: dict[str, object]) -> str:
-    gaps, duplicates, steps = r["missing_sequences_between_observed"], r["duplicate_sequences"], r["handoff_steps_seen"]
+    gaps, duplicates, steps = r["missing_sequence_ranges_between_observed"], r["duplicate_sequences"], r["handoff_steps_seen"]
     lines = [
         f"Numbered lines: {r['numbered_lines']} ({r['unique_sequences']} unique sequence numbers)",
         f"Highest sequence observed: {r['highest_sequence_observed'] if r['highest_sequence_observed'] is not None else 'none'}",
@@ -71,7 +71,7 @@ def render_text(r: dict[str, object]) -> str:
         "Handoff steps: " + (", ".join(map(str, steps)) or "none seen"),
         f"Lines containing failure words: {r['lines_with_failure_words']}",
         f"Ignored non-Relapse lines: {r['ignored_non_relapse_lines']}",
-        "Missing sequence numbers between observed lines: " + (", ".join(map(str, gaps)) or "none"),
+        "Missing sequence ranges between observed lines: " + (", ".join(f"{start}-{end}" for start, end in gaps) or "none"),
         "Duplicate sequence numbers: " + (", ".join(map(str, duplicates)) or "none"),
     ]
     if r["out_of_order_transitions"]:
