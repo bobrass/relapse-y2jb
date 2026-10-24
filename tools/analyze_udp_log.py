@@ -18,7 +18,7 @@ FAILURE = re.compile(r"\b(fatal|failed|panic|exception|error)\b", re.IGNORECASE)
 
 def analyze(stream: TextIO) -> dict[str, object]:
     seqs: list[int] = []
-    messages: dict[int, str] = {}
+    # Raw messages are not retained; the report contains derived metadata only.
     ignored = 0
     complete = elfldr = False
     handoff_steps: set[int] = set()
@@ -31,7 +31,7 @@ def analyze(stream: TextIO) -> dict[str, object]:
             continue
         n, message = int(match.group(1)), match.group(2)
         seqs.append(n)
-        messages[n] = message
+        # The message is discarded after milestone parsing.
         complete |= bool(COMPLETE.search(message))
         elfldr |= bool(ELFLDR.search(message))
         failures += bool(FAILURE.search(message))
@@ -51,7 +51,7 @@ def analyze(stream: TextIO) -> dict[str, object]:
         "missing_sequences_between_observed": gaps,
         "first_sequence": unique[0] if unique else None,
         "highest_sequence_observed": unique[-1] if unique else None,
-        "highest_sequence_message": messages.get(unique[-1]) if unique else None,
+        # Highest-sequence raw text is intentionally omitted.
         "completion_marker_seen": complete,
         "elfldr_9021_seen": elfldr,
         "handoff_steps_seen": sorted(handoff_steps),
